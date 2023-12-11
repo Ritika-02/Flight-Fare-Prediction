@@ -2,5 +2,8 @@ pandas
 numpy
 matplotlib
 scikit-learn
+ipykernel
+seaborn
+openpyxl
 
--e .
+#-e .
