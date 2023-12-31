@@ -32,7 +32,7 @@ class DataTransformation:
 
             one_hot_encode_cols = ['Airline', 'Source', 'Destination']
             ordinal_encode_cols = ['Total_Stops']
-            numerical_cols = ['Duration','Departure_Hour', 'Departure_Min', 'Arrival_Hour', 'Arrival_Min', 'Journey_Day', 'Journey_Month']
+            numerical_cols = ['Duration_Hour','Duration_Min','Departure_Hour', 'Departure_Min', 'Arrival_Hour', 'Arrival_Min', 'Journey_Day', 'Journey_Month']
 
             logging.info('Pipeline Initiated')
 
@@ -105,11 +105,15 @@ class DataTransformation:
                 df['Journey_Day'] = pd.to_datetime(df['Date_of_Journey'], format= '%d/%m/%Y').dt.day
                 df['Journey_Month'] = pd.to_datetime(df['Date_of_Journey'], format= '%d/%m/%Y').dt.month
 
+                # Extracting features from 'Date_of_Journey'
+                df['Duration_Hour'] = df['Duration'].str.extract(r'(\d+)h',expand= False).fillna(0).astype(int)
+                df['Duration_Min'] = df['Duration'].str.extract(r'(\d+)h',expand= False).fillna(0).astype(int)
+
 
             preprocessing_obj = self.get_data_transformation()
 
             target_column_name = 'Price'
-            drop_columns = [target_column_name,'Date_of_Journey', 'Route', 'Dep_Time','Arrival_Time', 'Additional_Info']
+            drop_columns = [target_column_name,'Date_of_Journey', 'Route', 'Dep_Time','Arrival_Time', 'Duration','Additional_Info']
 
             input_feature_train_df = train_df.drop(columns = drop_columns, axis=1)
             target_feature_train_df = train_df[target_column_name]
@@ -122,10 +126,20 @@ class DataTransformation:
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
             
             logging.info('Applying preprocessing object on training and testing datasets')
+            
+            train_arr = np.c_[input_feature_train_arr, np.array(target_feature_train_df)]
+            test_arr = np.c_[input_feature_test_arr, np.array(target_feature_test_df)]
 
             save_object(
-                file_apth = self.data_transformation_config.preprocessor_obj_file_path,
+                file_path = self.data_transformation_config.preprocessor_obj_file_path,
                 obj = preprocessing_obj
+            )
+
+            logging.info('preprocessing pickle file saved')
+
+            return (
+                train_arr,
+                test_arr
             )
 
         except Exception as e:
